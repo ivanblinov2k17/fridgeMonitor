@@ -1,20 +1,23 @@
-import TemperatureChart from './components/TemperatureChart';
-import { useTemperature } from './hooks/useTemperature';
+import { useEffect } from 'react';
 
-function App() {
-  const temperatures = useTemperature();
+import TemperatureService from './services/TemperatureService';
+
+import DeviceChart from './components/chart/DeviceChart';
+
+export default function App() {
+  useEffect(() => {
+    TemperatureService.start();
+
+    return () => {
+      TemperatureService.stop();
+    };
+  }, []);
+
   return (
     <div>
       <h1>Fridge Monitor</h1>
-      {Object.entries(temperatures).map(([id, data]) => (
-        <TemperatureChart 
-          key={id} 
-          title={`Fridge ${id}`} 
-          data={data} 
-        />
-      ))}
+
+      <DeviceChart deviceId={1} />
     </div>
   );
 }
-
-export default App;

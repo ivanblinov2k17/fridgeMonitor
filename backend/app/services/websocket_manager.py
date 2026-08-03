@@ -20,10 +20,10 @@ class ConnectionManager:
         print(f"Client disconnected. Total: {len(self.connections)}")
 
     async def broadcast(self, data: dict):
-        # print(
-        #     f"Broadcast to {len(self.connections)} clients:",
-        #     data
-        # )
+        print(
+            f"Broadcast to {len(self.connections)} clients:",
+            data
+        )
         disconnected = []
 
         for ws in self.connections:

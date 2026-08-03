@@ -1,35 +1,35 @@
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+// import {
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   Tooltip,
+//   ResponsiveContainer,
+// } from 'recharts';
 
-import type { TemperatureEvent } from '../types/temperature';
+// import type { TemperatureEvent } from '../types/temperature';
 
-interface Props {
-  title: string;
-  data: TemperatureEvent[];
-}
+// interface Props {
+//   title: string;
+//   data: TemperatureEvent[];
+// }
 
-export default function TemperatureChart({ title, data }: Props) {
-  return (
-    <div style={{ height: 300 }}>
-      <h3>{title}</h3>
+// export default function TemperatureChart({ title, data }: Props) {
+//   return (
+//     <div style={{ height: 300 }}>
+//       <h3>{title}</h3>
 
-      <ResponsiveContainer>
-        <LineChart data={data}>
-          <XAxis dataKey="timestamp" />
+//       <ResponsiveContainer>
+//         <LineChart data={data}>
+//           <XAxis dataKey="timestamp" />
 
-          <YAxis domain={['auto', 'auto']} />
+//           <YAxis domain={['auto', 'auto']} />
 
-          <Tooltip />
+//           <Tooltip />
 
-          <Line type="monotone" dataKey="temperature" stroke="#2563eb" />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
+//           <Line type="monotone" dataKey="temperature" stroke="#2563eb" />
+//         </LineChart>
+//       </ResponsiveContainer>
+//     </div>
+//   );
+// }

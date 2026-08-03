@@ -1,15 +1,15 @@
-import type { TemperatureEvent } from '../types/temperature';
+// import type { TemperatureEvent } from '../types/temperature';
 
-export function createTemperatureSocket(
-  callback: (event: TemperatureEvent) => void,
-) {
-  const socket = new WebSocket('ws://localhost:8000/ws');
+// export function createTemperatureSocket(
+//   callback: (event: TemperatureEvent) => void,
+// ) {
+//   const socket = new WebSocket('ws://127.0.0.1:8000/ws');
 
-  socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+//   socket.onmessage = (event) => {
+//     const data = JSON.parse(event.data);
 
-    callback(data);
-  };
+//     callback(data);
+//   };
 
-  return socket;
-}
+//   return socket;
+// }
