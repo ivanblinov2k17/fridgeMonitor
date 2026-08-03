@@ -9,9 +9,7 @@ import type { TemperaturePoint } from '../../types/temperature';
 const HOUR_SECONDS = 3600;
 
 interface Props {
-  deviceId: number;
-  deviceName?: string;
-  location?: string;
+  deviceIds: number[];
 }
 
 function toUPlotData(points: TemperaturePoint[]): uPlot.AlignedData {
@@ -26,26 +24,6 @@ function toUPlotData(points: TemperaturePoint[]): uPlot.AlignedData {
   return [times, temperatures];
 }
 
-function computeMean(points: TemperaturePoint[]): number | null {
-  if (points.length === 0) return null;
-  const sum = points.reduce((acc, p) => acc + p.temperature, 0);
-  return sum / points.length;
-}
-
-function toUPlotDataWithAverage(points: TemperaturePoint[]): uPlot.AlignedData {
-  const [times, temperatures] = toUPlotData(points);
-  const mean = computeMean(points);
-
-  if (mean === null) {
-    return [times, temperatures];
-  }
-
-  const averageLine = new Float64Array(points.length);
-  averageLine.fill(mean);
-
-  return [times, temperatures, averageLine];
-}
-
 function setHourWindow(chart: uPlot, points: TemperaturePoint[]) {
   const last = points.at(-1);
   if (!last) return;
@@ -54,18 +32,18 @@ function setHourWindow(chart: uPlot, points: TemperaturePoint[]) {
   chart.setScale('x', { min: time - HOUR_SECONDS, max: time });
 }
 
-export default function DeviceChart({ deviceId, deviceName, location }: Props) {
+export default function AverageChart({ deviceIds }: Props) {
   const container = useRef<HTMLDivElement | null>(null);
   const chart = useRef<uPlot | null>(null);
 
   useEffect(() => {
     if (!container.current) return;
 
-    const points = temperatureStore.getHistory(deviceId);
+    const points = temperatureStore.getFleetAverageHistory(deviceIds);
 
     const options: uPlot.Options = {
       width: container.current.clientWidth,
-      height: 280,
+      height: 240,
       scales: {
         x: { time: true },
         y: { auto: true },
@@ -79,44 +57,33 @@ export default function DeviceChart({ deviceId, deviceName, location }: Props) {
       series: [
         {},
         {
-          label: 'Temperature',
-          stroke: '#2563eb',
+          label: 'Fleet average',
+          stroke: '#10b981',
           width: 2,
-        },
-        {
-          label: 'Average',
-          stroke: '#f59e0b',
-          width: 2,
-          dash: [6, 4],
-          points: { show: false },
+          fill: 'rgba(16, 185, 129, 0.08)',
         },
       ],
     };
 
-    chart.current = new uPlot(
-      options,
-      toUPlotDataWithAverage(points),
-      container.current,
-    );
-
+    chart.current = new uPlot(options, toUPlotData(points), container.current);
     setHourWindow(chart.current, points);
 
     const resizeObserver = new ResizeObserver(() => {
       if (container.current && chart.current) {
-        chart.current.setSize({ width: container.current.clientWidth, height: 280 });
+        chart.current.setSize({ width: container.current.clientWidth, height: 240 });
       }
     });
     resizeObserver.observe(container.current);
 
-    const unsubscribe = temperatureStore.changed.subscribe((id) => {
-      if (id !== deviceId) return;
-
-      const history = temperatureStore.getHistory(deviceId);
-      chart.current?.setData(toUPlotDataWithAverage(history));
+    const refresh = () => {
+      const history = temperatureStore.getFleetAverageHistory(deviceIds);
+      chart.current?.setData(toUPlotData(history));
       if (chart.current) {
         setHourWindow(chart.current, history);
       }
-    });
+    };
+
+    const unsubscribe = temperatureStore.changed.subscribe(() => refresh());
 
     return () => {
       unsubscribe();
@@ -124,16 +91,14 @@ export default function DeviceChart({ deviceId, deviceName, location }: Props) {
       chart.current?.destroy();
       chart.current = null;
     };
-  }, [deviceId]);
-
-  const title = deviceName ?? `Fridge #${deviceId}`;
+  }, [deviceIds]);
 
   return (
     <div className="chart-panel">
       <div className="chart-panel__header">
         <div>
-          <h3 className="chart-panel__title">{title}</h3>
-          {location && <p className="chart-panel__subtitle">{location}</p>}
+          <h3 className="chart-panel__title">Fleet Average Temperature</h3>
+          <p className="chart-panel__subtitle">Mean across all monitored fridges</p>
         </div>
         <span className="chart-panel__badge">Last hour</span>
       </div>

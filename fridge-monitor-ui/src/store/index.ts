@@ -1,1 +1,1 @@
-export {default} from "./temperatureStore"
+export { default } from './TemperatureStore';
