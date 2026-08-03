@@ -15,6 +15,12 @@ router = APIRouter(
 )
 
 
+def _to_utc_iso(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).isoformat()
+
+
 @router.get("/latest")
 async def latest(
     db: AsyncSession = Depends(get_db)
@@ -50,7 +56,7 @@ async def latest(
         {
             "device_id": row.device_id,
             "temperature": row.temperature,
-            "timestamp": row.created_at
+            "timestamp": _to_utc_iso(row.created_at),
         }
         for row in result
     ]
@@ -87,7 +93,7 @@ async def history(
     return [
         {
             "temperature": item.temperature,
-            "timestamp": item.created_at
+            "timestamp": _to_utc_iso(item.created_at),
         }
         for item in result.scalars()
     ]

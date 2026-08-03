@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import uPlot from 'uplot';
 
 import temperatureStore from '../../store';
+import { buildChartAxes } from '../../utils/chartTheme';
 
 import type { TemperaturePoint } from '../../types/temperature';
 
@@ -48,12 +49,16 @@ export default function AverageChart({ deviceIds }: Props) {
         x: { time: true },
         y: { auto: true },
       },
-      axes: [
-        {},
-        {
-          label: '°C',
-        },
-      ],
+      axes: buildChartAxes('°C'),
+      cursor: {
+        show: true,
+        x: true,
+        y: true,
+      },
+      legend: {
+        show: true,
+        live: true,
+      },
       series: [
         {},
         {
@@ -61,6 +66,7 @@ export default function AverageChart({ deviceIds }: Props) {
           stroke: '#10b981',
           width: 2,
           fill: 'rgba(16, 185, 129, 0.08)',
+          value: (_u, v) => (v == null ? '—' : `${v.toFixed(1)}°C`),
         },
       ],
     };
@@ -102,7 +108,7 @@ export default function AverageChart({ deviceIds }: Props) {
         </div>
         <span className="chart-panel__badge">Last hour</span>
       </div>
-      <div className="chart-panel__canvas" ref={container} />
+      <div className="chart-panel__canvas chart-canvas" ref={container} />
     </div>
   );
 }

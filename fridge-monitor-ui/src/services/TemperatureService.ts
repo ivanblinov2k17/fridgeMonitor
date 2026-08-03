@@ -1,4 +1,5 @@
 import temperatureStore from '../store';
+import { parseTimestamp } from '../utils/timestamp';
 
 import type { TemperaturePoint } from '../types/temperature';
 
@@ -56,9 +57,11 @@ class TemperatureService {
       const data = JSON.parse(event.data) as TemperatureEvent;
 
       const point: TemperaturePoint = {
-        time: Date.parse(data.timestamp),
+        time: parseTimestamp(data.timestamp),
         temperature: data.temperature,
       };
+
+      if (!Number.isFinite(point.time)) return;
 
       temperatureStore.add(data.device_id, point);
     };
