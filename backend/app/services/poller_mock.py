@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.device import Device
 from app.models.measurement import Measurement
@@ -76,7 +76,7 @@ async def run():
                     {
                         "device_id": device.id,
                         "temperature": current,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.now(timezone.utc).isoformat()
                     }
                 )
 

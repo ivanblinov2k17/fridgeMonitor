@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, desc, text
@@ -66,7 +66,7 @@ async def history(
 ):
 
     from_time = (
-        datetime.utcnow()
+        datetime.now(timezone.utc)
         -
         timedelta(hours=hours)
     )

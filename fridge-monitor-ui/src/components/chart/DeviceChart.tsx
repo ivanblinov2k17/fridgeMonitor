@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef } from 'react';
 
 import uPlot from 'uplot';
@@ -9,78 +8,97 @@ interface Props {
   deviceId: number;
 }
 
+function convertToUPlotData(deviceId: number): uPlot.AlignedData {
+  const points = temperatureStore.getHistory(deviceId);
+
+  const times = new Float64Array(points.length);
+
+  const temperatures = new Float64Array(points.length);
+
+  points.forEach((point, index) => {
+    times[index] = point.time / 1000;
+
+    temperatures[index] = point.temperature;
+  });
+
+  return [times, temperatures];
+}
+
 export default function DeviceChart({ deviceId }: Props) {
-  const container = useRef<HTMLDivElement>(null);
+  const container = useRef<HTMLDivElement | null>(null);
 
-  const chart = useRef<uPlot>(null);
-
-  function getData(): uPlot.AlignedData {
-    const points = temperatureStore.getHistory(deviceId);
-
-    const times = new Float64Array(points.length);
-
-    const temperatures = new Float64Array(points.length);
-
-    points.forEach((point, index) => {
-      times[index] = point.time / 1000;
-
-      temperatures[index] = point.temperature;
-    });
-
-    return [times, temperatures];
-  }
+  const chart = useRef<uPlot | null>(null);
 
   useEffect(() => {
     if (!container.current) return;
 
-    chart.current = new uPlot(
-      {
-        width: 900,
+    const options: uPlot.Options = {
+      width: 900,
 
-        height: 300,
+      height: 300,
 
-        scales: {
-          x: {
-            time: true,
-
-            range: (u, min, max) => {
-              const now = Date.now() / 1000;
-
-              return [now - 3600, now];
-            },
-          },
+      scales: {
+        x: {
+          time: true,
         },
 
-        series: [
-          {},
-
-          {
-            label: '°C',
-
-            stroke: '#2563eb',
-
-            width: 2,
-          },
-        ],
+        y: {
+          auto: true,
+        },
       },
 
-      getData(),
+      series: [
+        {},
+
+        {
+          label: 'Temperature',
+          stroke: '#2563eb',
+
+          width: 2,
+        },
+      ],
+    };
+
+    chart.current = new uPlot(
+      options,
+
+      convertToUPlotData(deviceId),
 
       container.current,
     );
 
+    /*
+            Обновление данных
+        */
+
     const unsubscribe = temperatureStore.changed.subscribe((id) => {
       if (id !== deviceId) return;
 
-      chart.current?.setData(getData());
+      const data = convertToUPlotData(deviceId);
+
+      chart.current?.setData(data);
+
+      const points = temperatureStore.getHistory(deviceId);
+
+      const last = points.at(-1);
+
+      if (last) {
+        const time = last.time / 1000;
+
+        chart.current?.setScale('x', {
+          min: time - 3600,
+
+          max: time,
+        });
+      }
     });
 
     return () => {
       unsubscribe();
-
       chart.current?.destroy();
+      chart.current = null;
     };
-  }, []);
+  }, [deviceId]);
 
   return (
     <div>

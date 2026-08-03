@@ -46,8 +46,22 @@ class TemperatureService {
 
         temperature: data.temperature,
       };
+      console.log(
+        'RAW',
+        data.timestamp,
+        'PARSED',
+        point.time,
+        'DATE',
+        new Date(point.time),
+      );
+      console.log('NOW', Date.now(), new Date());
 
-      temperatureStore.add("STORE ADD", data.device_id, point);
+      temperatureStore.add(data.device_id, point);
+      // console.log(
+      //     "STORE ADD",
+      //     data.device_id,
+      //     point
+      // );
     };
 
     this.socket.onerror = (error) => {
