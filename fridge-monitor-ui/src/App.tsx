@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDevices } from './api/devices';
-import { getDeviceHistory } from './api/temperatures';
 import AverageChart from './components/chart/AverageChart';
 import DeviceChart from './components/chart/DeviceChart';
 import FridgeCard from './components/dashboard/FridgeCard';
 import Header from './components/dashboard/Header';
 import SummaryStats from './components/dashboard/SummaryStats';
+import { loadAllDeviceHistory } from './services/historyLoader';
 import TemperatureService from './services/TemperatureService';
 import temperatureStore from './store';
 
@@ -20,6 +20,12 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [, tick] = useState(0);
+  const devicesRef = useRef<Device[]>([]);
+  const hadConnectionRef = useRef(false);
+
+  useEffect(() => {
+    devicesRef.current = devices;
+  }, [devices]);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,20 +36,13 @@ export default function App() {
         if (cancelled) return;
 
         setDevices(deviceList);
+        devicesRef.current = deviceList;
+
         if (deviceList.length > 0) {
           setSelectedId(deviceList[0].id);
         }
 
-        await Promise.all(
-          deviceList.map(async (device) => {
-            const history = await getDeviceHistory(device.id, 1);
-            const points = history.map((item) => ({
-              time: Date.parse(item.timestamp),
-              temperature: item.temperature,
-            }));
-            temperatureStore.loadHistory(device.id, points);
-          }),
-        );
+        await loadAllDeviceHistory(deviceList, 1);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -53,7 +52,18 @@ export default function App() {
 
     init();
 
-    const unsubConnection = TemperatureService.onConnectionChange(setConnected);
+    const unsubConnection = TemperatureService.onConnectionChange(async (isConnected) => {
+      setConnected(isConnected);
+
+      if (isConnected && hadConnectionRef.current && devicesRef.current.length > 0) {
+        await loadAllDeviceHistory(devicesRef.current, 1);
+      }
+
+      if (isConnected) {
+        hadConnectionRef.current = true;
+      }
+    });
+
     const unsubStore = temperatureStore.changed.subscribe(() => {
       tick((n) => n + 1);
     });

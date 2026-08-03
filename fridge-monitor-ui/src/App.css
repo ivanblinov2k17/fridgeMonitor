@@ -333,6 +333,28 @@
   width: 100%;
 }
 
+/* uPlot axis labels, legend, and cursor values */
+.chart-canvas .u-legend {
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+}
+
+.chart-canvas .u-legend .u-label,
+.chart-canvas .u-legend .u-value {
+  color: var(--text-h);
+}
+
+.chart-canvas .u-axis {
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chart-canvas .u-legend .u-label,
+  .chart-canvas .u-legend .u-value {
+    color: #f3f4f6;
+  }
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .fridge-grid {

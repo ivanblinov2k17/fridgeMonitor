@@ -36,9 +36,13 @@ export class TemperatureStore {
   }
 
   loadHistory(deviceId: number, points: TemperaturePoint[]) {
-    if (points.length === 0) return;
-
     const device = this.getDevice(deviceId);
+    device.buffer.clear();
+
+    if (points.length === 0) {
+      this.changed.emit(deviceId);
+      return;
+    }
 
     for (const point of points) {
       device.buffer.push(point);

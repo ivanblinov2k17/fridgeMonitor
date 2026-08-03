@@ -64,7 +64,8 @@ async def run():
 
                 measurement = Measurement(
                     device_id=device.id,
-                    temperature=current
+                    temperature=current,
+                    created_at=datetime.now(timezone.utc),
                 )
 
                 db.add(measurement)
