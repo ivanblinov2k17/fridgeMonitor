@@ -1,8 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer
+from sqlalchemy import Index, DateTime, Float, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.models import Base
 
 
@@ -34,3 +33,9 @@ class Measurement(Base):
         "Device",
         back_populates="measurements",
     )
+
+Index(
+    "idx_measurement_device_time",
+    Measurement.device_id,
+    Measurement.created_at
+)

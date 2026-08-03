@@ -1,54 +1,93 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends
-from sqlalchemy import desc, select
+from sqlalchemy import select, desc, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.models.device import Device
+
 from app.models.measurement import Measurement
+
 
 router = APIRouter(
     prefix="/temperatures",
-    tags=["Temperatures"],
+    tags=["Temperatures"]
 )
 
 
 @router.get("/latest")
 async def latest(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
 
-    devices = (
-        await db.execute(
-            select(Device)
+    # берем последние записи через оконную функцию
+
+    query = """
+    SELECT
+        m.device_id,
+        m.temperature,
+        m.created_at
+    FROM measurements m
+    INNER JOIN
+    (
+        SELECT
+            device_id,
+            MAX(created_at) AS max_date
+        FROM measurements
+        GROUP BY device_id
+    ) latest
+    ON
+        m.device_id = latest.device_id
+        AND
+        m.created_at = latest.max_date
+    """
+
+    result = await db.execute(
+        text(query)
+    )
+
+    return [
+        {
+            "device_id": row.device_id,
+            "temperature": row.temperature,
+            "timestamp": row.created_at
+        }
+        for row in result
+    ]
+
+
+@router.get(
+    "/devices/{device_id}/history"
+)
+async def history(
+    device_id: int,
+    hours: int = 24,
+    db: AsyncSession = Depends(get_db)
+):
+
+    from_time = (
+        datetime.utcnow()
+        -
+        timedelta(hours=hours)
+    )
+
+
+    result = await db.execute(
+        select(Measurement)
+        .where(
+            Measurement.device_id == device_id,
+            Measurement.created_at >= from_time
         )
-    ).scalars().all()
+        .order_by(
+            Measurement.created_at
+        )
+    )
 
-    response = []
 
-    for device in devices:
-
-        measurement = (
-            await db.execute(
-                select(Measurement)
-                .where(
-                    Measurement.device_id == device.id
-                )
-                .order_by(
-                    desc(Measurement.created_at)
-                )
-                .limit(1)
-            )
-        ).scalar_one_or_none()
-
-        if measurement:
-
-            response.append(
-                {
-                    "device_id": device.id,
-                    "device_name": device.name,
-                    "temperature": measurement.temperature,
-                    "timestamp": measurement.created_at,
-                }
-            )
-
-    return response
+    return [
+        {
+            "temperature": item.temperature,
+            "timestamp": item.created_at
+        }
+        for item in result.scalars()
+    ]
