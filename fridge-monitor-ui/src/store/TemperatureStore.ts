@@ -75,6 +75,11 @@ export class TemperatureStore {
     }
 
     return [...buckets.entries()]
+      .filter(([bucket]) => {
+          const nowBucket =
+              Math.floor(Date.now()/5000)*5000;
+          return bucket < nowBucket;
+      })
       .sort(([a], [b]) => a - b)
       .map(([time, temps]) => ({
         time,
