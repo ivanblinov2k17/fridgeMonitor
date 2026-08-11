@@ -1,5 +1,6 @@
 import temperatureStore from '../store';
 import { parseTimestamp } from '../utils/timestamp';
+import { WS_URL } from '../config';
 
 import type { TemperaturePoint } from '../types/temperature';
 
@@ -47,7 +48,7 @@ class TemperatureService {
   private connect() {
     if (this.stopped) return;
 
-    this.socket = new WebSocket('ws://127.0.0.1:8000/ws');
+    this.socket = new WebSocket(WS_URL);
 
     this.socket.onopen = () => {
       this.setConnected(true);
