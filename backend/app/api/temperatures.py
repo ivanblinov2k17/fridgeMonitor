@@ -15,7 +15,12 @@ router = APIRouter(
 )
 
 
-def _to_utc_iso(dt: datetime) -> str:
+def _to_utc_iso(dt: datetime | str) -> str:
+    # Raw text() queries skip SQLAlchemy's type coercion, so SQLite hands
+    # timestamps back as plain strings.
+    if isinstance(dt, str):
+        dt = datetime.fromisoformat(dt)
+
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc).isoformat()
