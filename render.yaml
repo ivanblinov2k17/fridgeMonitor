@@ -25,7 +25,8 @@ services:
   - name: fridge-monitor-ui
     type: web
     runtime: static
-    plan: free
+    # No `plan` here: static sites have no instance to size and are always
+    # free. Render rejects the field outright.
     buildCommand: npm ci && npm run build
     rootDir: ./fridge-monitor-ui
     staticPublishPath: ./dist
