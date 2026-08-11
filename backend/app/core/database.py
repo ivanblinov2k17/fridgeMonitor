@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -25,12 +27,28 @@ async def get_db():
         yield session
 
 
+def _ensure_sqlite_dir():
+
+    url = settings.DATABASE_URL
+
+    if not url.startswith("sqlite"):
+        return
+
+    path = url.split("///")[-1]
+
+    parent = Path(path).parent
+
+    parent.mkdir(parents=True, exist_ok=True)
+
+
 async def init_db():
 
     # from app.models.device import Device
     # from app.models.measurement import Measurement
 
     from app.models import Base
+
+    _ensure_sqlite_dir()
 
 
     async with engine.begin() as conn:

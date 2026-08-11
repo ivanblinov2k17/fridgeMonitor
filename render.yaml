@@ -1,0 +1,36 @@
+services:
+
+  - name: fridge-monitor-api
+    type: web
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      # SQLite on the container filesystem. Free tier has no persistent disk,
+      # so this resets on every deploy/restart. Fine for a mock project.
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/fridge.db
+      - key: POLL_INTERVAL_SECONDS
+        value: "5"
+      - key: DEFAULT_DEVICES_COUNT
+        value: "10"
+      # Set to the static site's URL once it exists, e.g.
+      # https://fridge-monitor-ui.onrender.com
+      - key: CORS_ORIGINS
+        sync: false
+
+  - name: fridge-monitor-ui
+    type: web
+    runtime: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    rootDir: ./fridge-monitor-ui
+    staticPublishPath: ./dist
+    envVars:
+      # Set to the API's URL once it exists, e.g.
+      # https://fridge-monitor-api.onrender.com
+      - key: VITE_API_URL
+        sync: false
