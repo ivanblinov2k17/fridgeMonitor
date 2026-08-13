@@ -25,6 +25,7 @@ services:
 
       DEFAULT_DEVICES_COUNT: "10"
 
-      # Set CORS_ORIGINS in the Timeweb panel to the frontend's address.
-      # Substituted at build time; falls back to the local dev origin.
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # The deployed frontend is in the default so this does not depend on the
+      # panel's variables reaching compose substitution. Setting CORS_ORIGINS
+      # in the panel still overrides it when substitution does work.
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://ivanblinov2k17-fridgemonitor-388b.twc1.net,http://localhost:5173}
