@@ -36,11 +36,21 @@ docker compose -f docker-compose.local.yml up --build
 
 ```
 
-Frontend on http://localhost:8080, API on http://localhost:8000, SQLite
+Open `http://<host>:8080` from any machine on the network: the frontend
+proxies the API and the websocket, so the server's address does not need to
+be configured anywhere and only port 8080 has to be reachable. SQLite is
 persisted to `backend/data/`.
 
-`VITE_API_URL` is baked into the bundle at build time, so pointing the
-frontend elsewhere needs `--build`, not just a restart.
+Port 8000 is published too, but only for reaching the API directly (`/docs`).
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `WEB_PORT` | `8080` | Port the frontend is published on |
+| `API_URL` | empty (same origin) | Full address of a backend on another host |
+| `CORS_ORIGINS` | `http://localhost:8080,http://localhost:5173` | Only matters for calls straight to port 8000 |
+
+`API_URL` is baked into the bundle at build time, so changing it needs
+`--build`, not just a restart.
 
 Backend only:
 
