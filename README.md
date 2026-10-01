@@ -28,6 +28,22 @@ npm run dev
 
 ### With Docker
 
+Whole stack (API + frontend) in one command:
+
+```
+
+docker compose -f docker-compose.local.yml up --build
+
+```
+
+Frontend on http://localhost:8080, API on http://localhost:8000, SQLite
+persisted to `backend/data/`.
+
+`VITE_API_URL` is baked into the bundle at build time, so pointing the
+frontend elsewhere needs `--build`, not just a restart.
+
+Backend only:
+
 ```
 
 cd backend
@@ -35,7 +51,8 @@ docker compose up --build
 
 ```
 
-API on http://localhost:8000, SQLite persisted to `backend/data/`.
+The root `docker-compose.yml` is the Timeweb deploy file and is backend-only
+on purpose: that platform forbids volumes and proxies only the first service.
 
 ## Configuration
 
@@ -53,3 +70,46 @@ Frontend:
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `VITE_API_URL` | `http://127.0.0.1:8000` | Backend URL; websocket URL is derived from it |
+
+## Деплой на Timeweb Cloud (App Platform)
+
+Timeweb настраивается через панель, конфига в репозитории не требуется.
+Приложения создаются из одного репозитория, но по отдельности.
+
+Бэкенд сначала — фронтенду нужен его адрес на этапе сборки.
+
+**Бэкенд** (сборка из Docker Compose):
+
+Панель ищет `docker-compose.yml` строго в корне репозитория — для этого он
+там и лежит. Подпапку `backend` указать нельзя, путь к ней задан внутри
+файла через `build.context`.
+
+| Параметр | Значение |
+| --- | --- |
+| Файл сборки | `docker-compose.yml` в корне |
+| Порт | берётся из `EXPOSE 8000`, панель `PORT` не передаёт |
+| Healthcheck | `/` |
+| Переменные | `CORS_ORIGINS` = адрес фронтенда |
+
+Compose-режим запрещает `volumes`, поэтому корневой файл их не содержит, а
+`backend/docker-compose.yml` с монтированием `./data` остаётся для локальной
+разработки.
+
+**Фронтенд** (тип «Фронтенд»):
+
+| Параметр | Значение |
+| --- | --- |
+| Путь к директории проекта | `fridge-monitor-ui` |
+| Команда сборки | `npm ci && npm run build` |
+| Директория сборки | `dist` |
+| Переменные | `VITE_API_URL` = адрес бэкенда |
+
+«Директория сборки» складывается с путём к директории проекта, а не задаётся
+от корня репозитория, как сказано в документации. Здесь итог — 
+`fridge-monitor-ui/dist`. Если написать полный путь, сборка пройдёт успешно,
+но статика распакуется пустой и сайт отдаст 404 на все запросы.
+
+`VITE_API_URL` вшивается в бандл при сборке, поэтому после её изменения
+фронтенд нужно пересобрать — правки одной переменной недостаточно.
+
+Диск контейнера эфемерный: SQLite обнуляется при каждом редеплое.

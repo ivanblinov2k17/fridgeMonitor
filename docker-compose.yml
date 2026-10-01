@@ -1,0 +1,31 @@
+# Deploy config for Timeweb App Platform, which looks for this file in the
+# repository root and rejects volume mounts.
+#
+# For local development use backend/docker-compose.yml instead: it mounts
+# ./data so the database survives a container recreate.
+
+services:
+
+  backend:
+
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    ports:
+      - "8000:8000"
+
+    environment:
+
+      # No volumes allowed here, so SQLite lives inside the container and
+      # resets on every redeploy. Fine for a mock project.
+      DATABASE_URL: sqlite+aiosqlite:///./data/fridge.db
+
+      POLL_INTERVAL_SECONDS: "5"
+
+      DEFAULT_DEVICES_COUNT: "10"
+
+      # The deployed frontend is in the default so this does not depend on the
+      # panel's variables reaching compose substitution. Setting CORS_ORIGINS
+      # in the panel still overrides it when substitution does work.
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://ivanblinov2k17-fridgemonitor-388b.twc1.net,http://localhost:5173}
