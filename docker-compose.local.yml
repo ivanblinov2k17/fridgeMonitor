@@ -1,8 +1,10 @@
-# Runs the whole stack locally: API, frontend and the database file.
+# Runs the whole stack: API, frontend and the database file.
 #
 #   docker compose -f docker-compose.local.yml up --build
 #
-# Frontend on http://localhost:8080, API on http://localhost:8000.
+# Open http://<this-machine>:8080 from any computer on the network. The
+# frontend proxies the API, so no server address has to be configured and
+# nothing but port 8080 needs to be reachable.
 #
 # The root docker-compose.yml is the Timeweb deploy file and stays
 # backend-only, because that platform forbids volumes and proxies only the
@@ -16,6 +18,8 @@ services:
       context: ./backend
 
     ports:
+      # Only needed for reaching the API directly, e.g. /docs. The frontend
+      # talks to the backend over the compose network, not through this.
       - "8000:8000"
 
     environment:
@@ -26,9 +30,9 @@ services:
 
       DEFAULT_DEVICES_COUNT: "10"
 
-      # The containerised frontend, plus the Vite dev server for when the
-      # frontend is run with npm instead.
-      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
+      # Requests arrive through the proxy as same-origin, so these matter only
+      # when something calls port 8000 directly.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
 
     volumes:
       # Keeps the database across container recreates.
@@ -41,12 +45,13 @@ services:
     build:
       context: ./fridge-monitor-ui
       args:
-        # The browser runs on the host, so it reaches the API through the
-        # published port rather than the compose network.
-        VITE_API_URL: http://localhost:8000
+        # Empty means same origin. Set API_URL to a full address only to point
+        # the frontend at a backend on another host; it is baked into the
+        # bundle, so changing it needs --build.
+        VITE_API_URL: ${API_URL-}
 
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
 
     depends_on:
       - backend
