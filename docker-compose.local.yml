@@ -1,0 +1,54 @@
+# Runs the whole stack locally: API, frontend and the database file.
+#
+#   docker compose -f docker-compose.local.yml up --build
+#
+# Frontend on http://localhost:8080, API on http://localhost:8000.
+#
+# The root docker-compose.yml is the Timeweb deploy file and stays
+# backend-only, because that platform forbids volumes and proxies only the
+# first service.
+
+services:
+
+  backend:
+
+    build:
+      context: ./backend
+
+    ports:
+      - "8000:8000"
+
+    environment:
+
+      DATABASE_URL: sqlite+aiosqlite:///./data/fridge.db
+
+      POLL_INTERVAL_SECONDS: "5"
+
+      DEFAULT_DEVICES_COUNT: "10"
+
+      # The containerised frontend, plus the Vite dev server for when the
+      # frontend is run with npm instead.
+      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
+
+    volumes:
+      # Keeps the database across container recreates.
+      - ./backend/data:/app/data
+
+    restart: unless-stopped
+
+  frontend:
+
+    build:
+      context: ./fridge-monitor-ui
+      args:
+        # The browser runs on the host, so it reaches the API through the
+        # published port rather than the compose network.
+        VITE_API_URL: http://localhost:8000
+
+    ports:
+      - "8080:80"
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped

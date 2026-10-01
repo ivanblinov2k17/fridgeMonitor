@@ -28,6 +28,22 @@ npm run dev
 
 ### With Docker
 
+Whole stack (API + frontend) in one command:
+
+```
+
+docker compose -f docker-compose.local.yml up --build
+
+```
+
+Frontend on http://localhost:8080, API on http://localhost:8000, SQLite
+persisted to `backend/data/`.
+
+`VITE_API_URL` is baked into the bundle at build time, so pointing the
+frontend elsewhere needs `--build`, not just a restart.
+
+Backend only:
+
 ```
 
 cd backend
@@ -35,7 +51,8 @@ docker compose up --build
 
 ```
 
-API on http://localhost:8000, SQLite persisted to `backend/data/`.
+The root `docker-compose.yml` is the Timeweb deploy file and is backend-only
+on purpose: that platform forbids volumes and proxies only the first service.
 
 ## Configuration
 
