@@ -1,6 +1,12 @@
+# See docker-compose.local.yml in the repository root for why the version
+# is pinned: Compose v1 misreads files without one.
+version: "3.7"
+
 services:
 
   backend:
+
+    image: fridge-monitor-api
 
     build:
       context: .

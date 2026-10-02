@@ -4,7 +4,11 @@
 # Only used for running the whole stack locally: on Timeweb the panel builds
 # the frontend itself and serves the result.
 
-FROM node:24-slim AS build
+# Alpine for the same reason as backend/Dockerfile: on Docker before 20.10.10
+# the glibc in the Debian-based node images cannot start threads, which
+# breaks npm ci. The lockfile already carries the musl builds of the native
+# packages (rolldown, lightningcss).
+FROM node:24-alpine AS build
 
 WORKDIR /app
 

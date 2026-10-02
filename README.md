@@ -64,6 +64,39 @@ docker compose up --build
 The root `docker-compose.yml` is the Timeweb deploy file and is backend-only
 on purpose: that platform forbids volumes and proxies only the first service.
 
+### Old Docker (Windows 7, Docker Toolbox)
+
+The local compose files work with Docker 19.03 and Compose 1.24, which is
+what Docker Toolbox ships. Compose v1 has no `docker compose` subcommand, so
+use the hyphenated binary:
+
+```
+
+docker-compose -f docker-compose.local.yml up -d --build
+
+```
+
+- The stack runs inside the Toolbox VirtualBox VM, so open
+  `http://192.168.99.100:8080` (`docker-machine ip default` prints the
+  address), not `localhost`.
+- To open it from other computers on the network, forward port 8080 of the
+  `default` VM in VirtualBox (Settings → Network → Adapter 1 (NAT) → Port
+  Forwarding, host 8080 → guest 8080), then use the Windows machine's address.
+- Toolbox shares only `C:\Users` with the VM, so keep the repository there or
+  the `backend/data` volume will be empty.
+
+Images built elsewhere can be carried over instead of building on the
+server; the compose file names them `fridge-monitor-api` and
+`fridge-monitor-ui`, so after loading them run `up` with `--no-build`:
+
+```
+
+docker save fridge-monitor-api fridge-monitor-ui -o fridge-monitor.tar
+docker load -i fridge-monitor.tar
+docker-compose -f docker-compose.local.yml up -d --no-build
+
+```
+
 ## Configuration
 
 Backend (`backend/.env`):

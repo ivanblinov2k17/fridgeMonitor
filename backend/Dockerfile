@@ -1,4 +1,9 @@
-FROM python:3.12-slim
+# Alpine (musl), not slim (Debian glibc): glibc 2.34+ starts threads with the
+# clone3 syscall, which the seccomp profile of Docker before 20.10.10 rejects
+# with EPERM instead of ENOSYS. On such hosts (Docker Toolbox on Windows 7
+# ships 19.03) every thread fails to start: pip during the build and uvicorn
+# with aiosqlite at runtime. musl does not use clone3.
+FROM python:3.12-alpine
 
 
 WORKDIR /app

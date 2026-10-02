@@ -2,6 +2,9 @@
 #
 #   docker compose -f docker-compose.local.yml up --build
 #
+# On old Docker (Docker Toolbox on Windows 7, Compose v1) the command is
+# docker-compose with a hyphen; everything else is the same.
+#
 # Open http://<this-machine>:8080 from any computer on the network. The
 # frontend proxies the API, so no server address has to be configured and
 # nothing but port 8080 needs to be reachable.
@@ -10,9 +13,21 @@
 # backend-only, because that platform forbids volumes and proxies only the
 # first service.
 
+# Compose v1 reads a file without a version as the legacy v1 format, takes
+# "services" for a service name and rejects the ${VAR:-default} substitutions
+# below. 3.7 is the newest format Docker 18.06+ and Compose 1.22+ understand;
+# Compose v2 ignores the field.
+version: "3.7"
+
 services:
 
   backend:
+
+    # Fixed names, so images built on one machine and carried over with
+    # docker save / docker load are picked up instead of rebuilt. Without
+    # them Compose v1 and v2 derive different names (fridgemonitor_backend
+    # vs fridgemonitor-backend) and neither finds the other's image.
+    image: fridge-monitor-api
 
     build:
       context: ./backend
@@ -41,6 +56,8 @@ services:
     restart: unless-stopped
 
   frontend:
+
+    image: fridge-monitor-ui
 
     build:
       context: ./fridge-monitor-ui
