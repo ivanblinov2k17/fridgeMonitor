@@ -23,7 +23,7 @@ async def initialize():
 
         devices = (
             await db.execute(
-                select(Device)
+                select(Device).where(Device.unit.is_(None))
             )
         ).scalars().all()
 
@@ -45,13 +45,17 @@ async def run():
 
             devices = (
                 await db.execute(
-                    select(Device)
+                    select(Device).where(Device.unit.is_(None))
                 )
             ).scalars().all()
 
+            # Mock devices only: never invent numbers for real sensors left
+            # from POLLER=modbus.
             for device in devices:
 
-                current = device_temperatures[device.id]
+                current = device_temperatures.setdefault(
+                    device.id, random.uniform(2.0, 6.0)
+                )
 
                 current += random.uniform(
                     -0.3,
@@ -77,6 +81,7 @@ async def run():
                     {
                         "device_id": device.id,
                         "temperature": current,
+                        "status": "ok",
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }
                 )

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -56,3 +57,44 @@ async def init_db():
         await conn.run_sync(
             Base.metadata.create_all
         )
+
+        await conn.run_sync(_add_missing_columns)
+
+
+def _add_missing_columns(conn):
+    """Brings tables created by an older version up to the current models.
+
+    create_all only creates missing tables and never touches existing ones,
+    and Alembic is not set up yet. This covers the one kind of change made
+    so far - new nullable or defaulted columns, plus their indexes - so an
+    existing database on a server keeps its history.
+    """
+
+    from app.models import Base
+
+    inspector = inspect(conn)
+
+    for table in Base.metadata.sorted_tables:
+
+        existing = {
+            column["name"]
+            for column in inspector.get_columns(table.name)
+        }
+
+        for column in table.columns:
+
+            if column.name in existing:
+                continue
+
+            ddl = (
+                f"ALTER TABLE {table.name} ADD COLUMN {column.name} "
+                f"{column.type.compile(conn.dialect)}"
+            )
+
+            if column.server_default is not None:
+                ddl += f" NOT NULL DEFAULT '{column.server_default.arg}'"
+
+            conn.execute(text(ddl))
+
+        for index in table.indexes:
+            index.create(conn, checkfirst=True)

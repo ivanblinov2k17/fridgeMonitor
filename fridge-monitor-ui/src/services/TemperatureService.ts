@@ -2,13 +2,7 @@ import temperatureStore from '../store';
 import { parseTimestamp } from '../utils/timestamp';
 import { WS_URL } from '../config';
 
-import type { TemperaturePoint } from '../types/temperature';
-
-interface TemperatureEvent {
-  device_id: number;
-  temperature: number;
-  timestamp: string;
-}
+import type { TemperatureEvent, TemperaturePoint } from '../types/temperature';
 
 type ConnectionListener = (connected: boolean) => void;
 
@@ -56,6 +50,11 @@ class TemperatureService {
 
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data) as TemperatureEvent;
+
+      temperatureStore.setStatus(data.device_id, data.status ?? 'ok');
+
+      // A faulty sensor reports no temperature: nothing to plot.
+      if (data.temperature === null) return;
 
       const point: TemperaturePoint = {
         time: parseTimestamp(data.timestamp),

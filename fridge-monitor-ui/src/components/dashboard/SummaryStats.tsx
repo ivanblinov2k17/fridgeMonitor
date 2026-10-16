@@ -18,7 +18,9 @@ export default function SummaryStats({ deviceIds }: Props) {
     return unsubscribe;
   }, []);
 
+  // Faulty sensors hold a stale number: leave them out, they count as alerts.
   const temps = deviceIds
+    .filter((id) => temperatureStore.getStatus(id) === 'ok')
     .map((id) => temperatureStore.getCurrentTemperature(id))
     .filter((t) => t !== undefined && t !== 0);
 

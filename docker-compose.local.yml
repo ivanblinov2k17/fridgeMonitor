@@ -45,6 +45,17 @@ services:
 
       DEFAULT_DEVICES_COUNT: "10"
 
+      # Real sensors by default: this file is what runs at the factory. On a
+      # machine without the hardware start it with POLLER=mock.
+      POLLER: ${POLLER:-modbus}
+
+      # MKON gateway in front of the MV110 modules.
+      MODBUS_HOST: ${MODBUS_HOST:-192.168.1.31}
+
+      # Addresses searched for modules. A module added later within this
+      # range is picked up without a restart; widen it if needed.
+      MODBUS_UNITS: ${MODBUS_UNITS:-2-16}
+
       # Requests arrive through the proxy as same-origin, so these matter only
       # when something calls port 8000 directly.
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}

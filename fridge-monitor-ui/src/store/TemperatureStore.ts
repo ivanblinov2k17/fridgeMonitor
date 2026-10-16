@@ -60,6 +60,19 @@ export class TemperatureStore {
     return this.getDevice(deviceId).lastTemperature;
   }
 
+  setStatus(deviceId: number, status: string) {
+    const device = this.getDevice(deviceId);
+
+    if (device.status === status) return;
+
+    device.status = status;
+    this.changed.emit(deviceId);
+  }
+
+  getStatus(deviceId: number) {
+    return this.getDevice(deviceId).status;
+  }
+
   getFleetAverageHistory(deviceIds: number[]): TemperaturePoint[] {
     if (deviceIds.length === 0) return [];
 
