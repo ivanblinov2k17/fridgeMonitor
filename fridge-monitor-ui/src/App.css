@@ -267,6 +267,15 @@
   letter-spacing: -0.02em;
 }
 
+.fridge-card__temp--fault {
+  font-size: 1.05rem;
+  line-height: 1.43;
+}
+
+.fridge-card--unknown .fridge-card__temp--fault {
+  color: var(--text);
+}
+
 .fridge-card--warning .fridge-card__temp {
   color: #d97706;
 }

@@ -11,4 +11,7 @@ export default class DeviceHistory {
 
     lastTemperature = 0;
 
+    // "ok" or a fault key; while faulty lastTemperature is stale.
+    status = 'ok';
+
 }

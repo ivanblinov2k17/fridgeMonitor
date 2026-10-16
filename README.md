@@ -97,6 +97,40 @@ docker-compose -f docker-compose.local.yml up -d --no-build
 
 ```
 
+## Real sensors (MV110 + MKON)
+
+`docker-compose.local.yml` reads real sensors by default: the backend talks
+Modbus TCP to the MKON gateway at `192.168.1.31`, which passes requests to
+the MV110 modules on its RS-485 line.
+
+- On start the backend tries every address in `MODBUS_UNITS` (default
+  `2-16`; 1 is the gateway itself) and creates a device for every connected
+  input of every module that answers. Afterwards it tries one more address
+  per poll, so a module added to the line later shows up on its own.
+- Inputs the module reports as switched off are not shown.
+- A broken or shorted sensor, or a module that stopped answering, shows its
+  state on the card instead of a temperature, and nothing is written to the
+  history for it: the module keeps the last good value in its registers,
+  and storing it would look like a real reading.
+- Sensors are created as `Sensor 2.1` (module 2, input 1). Rename them to
+  the chamber in the API docs at `http://<server>:8000/docs`,
+  `PATCH /devices/{id}`.
+- The first start on an existing database removes the mock devices and
+  their random history.
+
+Without the hardware, run the demo data instead:
+
+```
+POLLER=mock docker compose -f docker-compose.local.yml up
+```
+
+On Windows `cmd`, `set POLLER=mock` first. Other settings: `MODBUS_HOST`,
+`MODBUS_PORT` (502), `MODBUS_TIMEOUT_SECONDS` (2) - see
+`backend/app/core/config.py`.
+
+To check the hardware without the stack, `tools/mv110_scan.py` finds the
+module addresses and `tools/mv110_probe.py` prints one module's readings.
+
 ## Configuration
 
 Backend (`backend/.env`):

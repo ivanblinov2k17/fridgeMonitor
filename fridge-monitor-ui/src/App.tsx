@@ -14,6 +14,12 @@ import type { Device } from './types/temperature';
 
 import './App.css';
 
+function applyStatuses(deviceList: Device[]) {
+  for (const device of deviceList) {
+    temperatureStore.setStatus(device.id, device.status ?? 'ok');
+  }
+}
+
 export default function App() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -22,6 +28,7 @@ export default function App() {
   const [, tick] = useState(0);
   const devicesRef = useRef<Device[]>([]);
   const hadConnectionRef = useRef(false);
+  const refreshingRef = useRef(false);
 
   useEffect(() => {
     devicesRef.current = devices;
@@ -35,8 +42,11 @@ export default function App() {
         const deviceList = await getDevices();
         if (cancelled) return;
 
-        setDevices(deviceList);
+        // Ref first: status updates emit, and the store listener treats ids
+        // missing from the ref as unknown devices.
         devicesRef.current = deviceList;
+        applyStatuses(deviceList);
+        setDevices(deviceList);
 
         if (deviceList.length > 0) {
           setSelectedId(deviceList[0].id);
@@ -64,7 +74,36 @@ export default function App() {
       }
     });
 
-    const unsubStore = temperatureStore.changed.subscribe(() => {
+    // The backend creates devices as it finds sensors on the line, so a
+    // reading for an id not in the list means the list is out of date.
+    async function refreshDevices() {
+      if (refreshingRef.current) return;
+      refreshingRef.current = true;
+
+      try {
+        const deviceList = await getDevices();
+        if (cancelled) return;
+
+        const known = new Set(devicesRef.current.map((d) => d.id));
+        const added = deviceList.filter((d) => !known.has(d.id));
+
+        devicesRef.current = deviceList;
+        applyStatuses(deviceList);
+        setDevices(deviceList);
+        setSelectedId((current) => current ?? deviceList[0]?.id ?? null);
+
+        await loadAllDeviceHistory(added, 1);
+      } catch {
+        // Next unknown reading will try again.
+      } finally {
+        refreshingRef.current = false;
+      }
+    }
+
+    const unsubStore = temperatureStore.changed.subscribe((deviceId) => {
+      if (!devicesRef.current.some((d) => d.id === deviceId)) {
+        refreshDevices();
+      }
       tick((n) => n + 1);
     });
 

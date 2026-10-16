@@ -7,8 +7,10 @@ from app.core.config import settings
 
 async def seed_devices(db: AsyncSession):
 
+    # Only mock devices count: real sensors left from POLLER=modbus must not
+    # stop the demo set from being created.
     result = await db.execute(
-        select(Device)
+        select(Device).where(Device.unit.is_(None))
     )
 
     devices = result.scalars().all()
