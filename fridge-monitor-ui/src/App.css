@@ -338,6 +338,81 @@
   white-space: nowrap;
 }
 
+/* Export */
+.export-panel__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.export-panel__preset {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.export-panel__preset:hover {
+  border-color: var(--accent-border);
+}
+
+.export-panel__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.export-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text);
+  min-width: 0;
+}
+
+.export-panel__field input,
+.export-panel__field select {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  max-width: 100%;
+}
+
+.export-panel__download {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.export-panel__download:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.export-panel__error {
+  margin: 4px 0 8px;
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
 .chart-panel__canvas {
   width: 100%;
 }

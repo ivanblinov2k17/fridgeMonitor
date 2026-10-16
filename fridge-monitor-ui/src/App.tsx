@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getDevices } from './api/devices';
 import AverageChart from './components/chart/AverageChart';
 import DeviceChart from './components/chart/DeviceChart';
+import ExportPanel from './components/dashboard/ExportPanel';
 import FridgeCard from './components/dashboard/FridgeCard';
 import Header from './components/dashboard/Header';
 import SummaryStats from './components/dashboard/SummaryStats';
@@ -151,6 +152,7 @@ export default function App() {
               />
             )}
             <AverageChart deviceIds={deviceIds} />
+            <ExportPanel devices={devices} />
           </section>
         </>
       )}

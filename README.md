@@ -118,6 +118,12 @@ the MV110 modules on its RS-485 line.
 - The first start on an existing database removes the mock devices and
   their random history.
 
+The Export panel under the charts downloads a temperature table for a
+period (`GET /export/temperatures.csv`): one row per time step, one column
+per sensor, averaged over 1 min to 1 hour or raw. It is written for Excel
+with Russian regional settings (`;`, decimal comma), so it opens with a
+double click. Empty cells are times when the sensor was faulty.
+
 Without the hardware, run the demo data instead:
 
 ```
