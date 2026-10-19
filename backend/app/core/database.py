@@ -44,8 +44,9 @@ def _ensure_sqlite_dir():
 
 async def init_db():
 
-    # from app.models.device import Device
-    # from app.models.measurement import Measurement
+    # Imported for the side effect: a model that nothing has imported yet
+    # is missing from the metadata, and create_all skips its table.
+    from app.models import device, event, measurement  # noqa: F401
 
     from app.models import Base
 

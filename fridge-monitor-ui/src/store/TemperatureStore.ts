@@ -73,6 +73,19 @@ export class TemperatureStore {
     return this.getDevice(deviceId).status;
   }
 
+  setAlarm(deviceId: number, alarm: string | null) {
+    const device = this.getDevice(deviceId);
+
+    if (device.alarm === alarm) return;
+
+    device.alarm = alarm;
+    this.changed.emit(deviceId);
+  }
+
+  getAlarm(deviceId: number) {
+    return this.getDevice(deviceId).alarm;
+  }
+
   getFleetAverageHistory(deviceIds: number[]): TemperaturePoint[] {
     if (deviceIds.length === 0) return [];
 

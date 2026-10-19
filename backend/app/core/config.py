@@ -29,6 +29,17 @@ class Settings(BaseSettings):
     # Address 1 belongs to the MKON gateway itself.
     MODBUS_UNITS: str = "2-16"
 
+    # Limits given to a newly discovered sensor, in °C. Existing devices
+    # keep whatever they have; both are set per device afterwards.
+    DEFAULT_MIN_TEMP: float = 2.0
+
+    DEFAULT_MAX_TEMP: float = 6.0
+
+    # How far back inside the limits a temperature must come before the
+    # alarm clears. Without it a reading sitting on the limit opens and
+    # closes an event every poll.
+    ALARM_HYSTERESIS_C: float = 0.3
+
     # Comma-separated list of allowed browser origins.
     CORS_ORIGINS: str = "http://localhost:5173"
 
