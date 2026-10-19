@@ -46,7 +46,13 @@ async def init_db():
 
     # Imported for the side effect: a model that nothing has imported yet
     # is missing from the metadata, and create_all skips its table.
-    from app.models import device, event, measurement  # noqa: F401
+    from app.models import (  # noqa: F401
+        device,
+        event,
+        measurement,
+        rollup,
+        setting,
+    )
 
     from app.models import Base
 

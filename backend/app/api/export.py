@@ -13,11 +13,12 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
-from sqlalchemy import bindparam, select, text
+from sqlalchemy import bindparam, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.device import Device
+from app.models.measurement import Measurement
 
 
 router = APIRouter(prefix="/export", tags=["Export"])
@@ -94,17 +95,53 @@ async def export_temperatures(
     if not devices:
         raise HTTPException(404, "No such device")
 
+    # Raw readings are deleted once they age out, so anything older comes
+    # from the summaries. Whatever raw still exists wins, and the boundary
+    # is taken from the data itself so the two sources cannot overlap and
+    # count a period twice.
+    raw_from = (
+        await db.execute(select(func.min(Measurement.created_at)))
+    ).scalar_one_or_none()
+
+    if raw_from is None:
+        raw_from = end
+    elif raw_from.tzinfo is None:
+        raw_from = raw_from.replace(tzinfo=timezone.utc)
+
     rows = await db.execute(
         text(
             """
+            WITH source AS (
+
+                SELECT
+                    device_id,
+                    CAST(strftime('%s', created_at) AS INTEGER) AS at,
+                    temperature AS avg_t,
+                    1 AS n
+                FROM measurements
+                WHERE created_at >= :raw_from
+                  AND created_at >= :start
+                  AND created_at < :end
+                  AND device_id IN :ids
+
+                UNION ALL
+
+                SELECT
+                    device_id,
+                    CAST(strftime('%s', bucket_start) AS INTEGER) AS at,
+                    avg_temp AS avg_t,
+                    count AS n
+                FROM measurement_rollup
+                WHERE bucket_start >= :start
+                  AND bucket_start < :raw_from
+                  AND bucket_start < :end
+                  AND device_id IN :ids
+            )
             SELECT
                 device_id,
-                CAST(strftime('%s', created_at) AS INTEGER) / :bucket AS slot,
-                AVG(temperature) AS temperature
-            FROM measurements
-            WHERE created_at >= :start
-              AND created_at < :end
-              AND device_id IN :ids
+                at / :bucket AS slot,
+                SUM(avg_t * n) / SUM(n) AS temperature
+            FROM source
             GROUP BY device_id, slot
             ORDER BY slot
             """
@@ -113,6 +150,7 @@ async def export_temperatures(
             "bucket": bucket,
             "start": _db_time(start),
             "end": _db_time(end),
+            "raw_from": _db_time(raw_from),
             "ids": [d.id for d in devices],
         },
     )
