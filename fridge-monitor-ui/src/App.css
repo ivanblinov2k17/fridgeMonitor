@@ -468,3 +468,133 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Alarm limits */
+.fridge-card__limits {
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: var(--text);
+  opacity: 0.75;
+}
+
+.limits-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.limits-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text);
+  min-width: 0;
+}
+
+.limits-panel__field input {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  max-width: 7rem;
+}
+
+.limits-panel__save {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.limits-panel__save:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.limits-panel__error {
+  margin: 8px 0 4px;
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+.limits-panel__saved {
+  margin: 8px 0 4px;
+  font-size: 0.8rem;
+  color: #16a34a;
+}
+
+/* Alarm log */
+.event-log__empty {
+  margin: 4px 0 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.event-log__scroll {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.event-log__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-log__table th,
+.event-log__table td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.event-log__table th {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.event-log__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.event-log__row--open td {
+  font-weight: 500;
+}
+
+.event-log__kind {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+}
+
+.event-log__kind--warning {
+  color: #d97706;
+  border-color: #d9770633;
+}
+
+.event-log__kind--critical {
+  color: #dc2626;
+  border-color: #dc262633;
+}
+
+.event-log__now {
+  color: #dc2626;
+}

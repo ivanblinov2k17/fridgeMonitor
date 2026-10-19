@@ -18,7 +18,7 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.device import Device
 from app.models.measurement import Measurement
-from app.services import modbus
+from app.services import alarms, modbus
 from app.services.websocket_manager import manager
 
 
@@ -162,6 +162,7 @@ class Poller:
 
         now = datetime.now(timezone.utc)
         events = []
+        readings = []
 
         async with AsyncSessionLocal() as db:
 
@@ -190,6 +191,8 @@ class Poller:
                         unit=unit,
                         channel=channel,
                         status=status,
+                        min_temp=settings.DEFAULT_MIN_TEMP,
+                        max_temp=settings.DEFAULT_MAX_TEMP,
                     )
                     db.add(device)
                     await db.flush()
@@ -216,11 +219,17 @@ class Poller:
                         )
                     )
 
+                readings.append((device, status, temperature))
+
+            alarm_by_device = await alarms.sync(db, readings, now)
+
+            for device, status, temperature in readings:
                 events.append(
                     {
                         "device_id": device.id,
                         "temperature": temperature,
                         "status": status,
+                        "alarm": alarm_by_device.get(device.id),
                         "timestamp": now.isoformat(),
                     }
                 )
@@ -235,7 +244,7 @@ class Poller:
         if not units:
             return
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc)
 
         async with AsyncSessionLocal() as db:
 
@@ -246,6 +255,12 @@ class Poller:
             for device in devices:
                 device.status = modbus.STATUS_NO_LINK
 
+            alarm_by_device = await alarms.sync(
+                db,
+                [(device, modbus.STATUS_NO_LINK, None) for device in devices],
+                now,
+            )
+
             await db.commit()
 
         for device in devices:
@@ -254,7 +269,8 @@ class Poller:
                     "device_id": device.id,
                     "temperature": None,
                     "status": modbus.STATUS_NO_LINK,
-                    "timestamp": now,
+                    "alarm": alarm_by_device.get(device.id),
+                    "timestamp": now.isoformat(),
                 }
             )
 

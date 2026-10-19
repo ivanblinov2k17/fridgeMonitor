@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from app.models.device import Device
 from app.models.measurement import Measurement
 
+from app.services import alarms
 from app.services.websocket_manager import manager
 
 
@@ -49,6 +50,9 @@ async def run():
                 )
             ).scalars().all()
 
+            now = datetime.now(timezone.utc)
+            readings = []
+
             # Mock devices only: never invent numbers for real sensors left
             # from POLLER=modbus.
             for device in devices:
@@ -69,24 +73,28 @@ async def run():
                 measurement = Measurement(
                     device_id=device.id,
                     temperature=current,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=now,
                 )
 
                 db.add(measurement)
 
-                
+                readings.append((device, "ok", current))
 
-
-                await manager.broadcast(
-                    {
-                        "device_id": device.id,
-                        "temperature": current,
-                        "status": "ok",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                )
+            alarm_by_device = await alarms.sync(db, readings, now)
 
             await db.commit()
+
+        for device, _, current in readings:
+
+            await manager.broadcast(
+                {
+                    "device_id": device.id,
+                    "temperature": current,
+                    "status": "ok",
+                    "alarm": alarm_by_device.get(device.id),
+                    "timestamp": now.isoformat(),
+                }
+            )
 
         await asyncio.sleep(
             settings.POLL_INTERVAL_SECONDS

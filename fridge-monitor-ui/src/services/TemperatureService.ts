@@ -52,6 +52,7 @@ class TemperatureService {
       const data = JSON.parse(event.data) as TemperatureEvent;
 
       temperatureStore.setStatus(data.device_id, data.status ?? 'ok');
+      temperatureStore.setAlarm(data.device_id, data.alarm ?? null);
 
       // A faulty sensor reports no temperature: nothing to plot.
       if (data.temperature === null) return;

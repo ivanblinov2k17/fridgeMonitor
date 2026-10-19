@@ -3,9 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getDevices } from './api/devices';
 import AverageChart from './components/chart/AverageChart';
 import DeviceChart from './components/chart/DeviceChart';
+import EventLog from './components/dashboard/EventLog';
 import ExportPanel from './components/dashboard/ExportPanel';
 import FridgeCard from './components/dashboard/FridgeCard';
 import Header from './components/dashboard/Header';
+import LimitsPanel from './components/dashboard/LimitsPanel';
 import SummaryStats from './components/dashboard/SummaryStats';
 import { loadAllDeviceHistory } from './services/historyLoader';
 import TemperatureService from './services/TemperatureService';
@@ -18,6 +20,7 @@ import './App.css';
 function applyStatuses(deviceList: Device[]) {
   for (const device of deviceList) {
     temperatureStore.setStatus(device.id, device.status ?? 'ok');
+    temperatureStore.setAlarm(device.id, device.alarm ?? null);
   }
 }
 
@@ -119,6 +122,20 @@ export default function App() {
   const selectedDevice = devices.find((d) => d.id === selectedId);
   const deviceIds = useMemo(() => devices.map((d) => d.id), [devices]);
 
+  // Saving limits returns the device as it now stands, including whether
+  // the change opened or cleared an alarm.
+  function applyDeviceUpdate(updated: Device) {
+    setDevices((current) =>
+      current.map((device) => (device.id === updated.id ? updated : device)),
+    );
+
+    devicesRef.current = devicesRef.current.map((device) =>
+      device.id === updated.id ? updated : device,
+    );
+
+    temperatureStore.setAlarm(updated.id, updated.alarm ?? null);
+  }
+
   return (
     <div className="dashboard">
       <Header connected={connected} />
@@ -151,7 +168,11 @@ export default function App() {
                 location={selectedDevice.location}
               />
             )}
+            {selectedDevice && (
+              <LimitsPanel device={selectedDevice} onSaved={applyDeviceUpdate} />
+            )}
             <AverageChart deviceIds={deviceIds} />
+            <EventLog />
             <ExportPanel devices={devices} />
           </section>
         </>
