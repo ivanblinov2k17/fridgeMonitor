@@ -8,6 +8,7 @@ import ExportPanel from './components/dashboard/ExportPanel';
 import FridgeCard from './components/dashboard/FridgeCard';
 import Header from './components/dashboard/Header';
 import LimitsPanel from './components/dashboard/LimitsPanel';
+import SettingsPanel from './components/dashboard/SettingsPanel';
 import SummaryStats from './components/dashboard/SummaryStats';
 import { loadAllDeviceHistory } from './services/historyLoader';
 import TemperatureService from './services/TemperatureService';
@@ -174,6 +175,7 @@ export default function App() {
             <AverageChart deviceIds={deviceIds} />
             <EventLog />
             <ExportPanel devices={devices} />
+            <SettingsPanel />
           </section>
         </>
       )}

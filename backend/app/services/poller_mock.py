@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from app.models.device import Device
 from app.models.measurement import Measurement
 
-from app.services import alarms
+from app.services import alarms, runtime_settings
 from app.services.websocket_manager import manager
 
 
@@ -96,6 +96,8 @@ async def run():
                 }
             )
 
+        # Read fresh each cycle: changing it in the dashboard takes effect
+        # on the next reading rather than on the next restart.
         await asyncio.sleep(
-            settings.POLL_INTERVAL_SECONDS
+            await runtime_settings.current_poll_interval()
         )

@@ -598,3 +598,51 @@
 .event-log__now {
   color: #dc2626;
 }
+
+/* Polling */
+.settings-panel__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.settings-panel__choice {
+  font: inherit;
+  font-size: 0.85rem;
+  min-width: 3.5rem;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.settings-panel__choice:hover:not(:disabled) {
+  border-color: var(--accent-border);
+}
+
+.settings-panel__choice--active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.settings-panel__choice:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.settings-panel__hint {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.settings-panel__error {
+  margin: 4px 0 8px;
+  font-size: 0.8rem;
+  color: #dc2626;
+}
