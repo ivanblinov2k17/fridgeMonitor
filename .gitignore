@@ -5,3 +5,4 @@ fridge.db
 backend/data/
 fridge-images.tar
 .claude/launch.json
+.env
