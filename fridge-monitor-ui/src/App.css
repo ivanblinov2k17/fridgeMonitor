@@ -646,3 +646,256 @@
   font-size: 0.8rem;
   color: #dc2626;
 }
+
+/* Вкладки */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs__tab {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 9px 18px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tabs__tab:hover {
+  color: var(--text-h);
+}
+
+.tabs__tab--active {
+  color: var(--text-h);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+/* План цеха */
+.plan {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.plan__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.plan__room rect {
+  fill: var(--code-bg);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.plan__room--yard rect {
+  fill: none;
+  stroke-dasharray: 4 4;
+}
+
+.plan__room--clickable {
+  cursor: pointer;
+}
+
+.plan__room--clickable:hover rect {
+  stroke-width: 2;
+}
+
+.plan__room--selected rect {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+/* Состояния камер: те же уровни, что на карточках */
+.plan__room--normal rect {
+  fill: #16a34a22;
+  stroke: #16a34a88;
+}
+
+.plan__room--warning rect {
+  fill: #d9770626;
+  stroke: #d97706aa;
+}
+
+.plan__room--critical rect {
+  fill: #dc262626;
+  stroke: #dc2626aa;
+}
+
+.plan__room--unknown rect {
+  fill: var(--code-bg);
+  stroke: var(--border);
+  stroke-dasharray: 3 3;
+}
+
+.plan__label {
+  font-size: 11px;
+  fill: var(--text);
+}
+
+.plan__room--chamber .plan__label {
+  font-weight: 600;
+  fill: var(--text-h);
+}
+
+.plan__reading {
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan__room--warning .plan__reading {
+  fill: #d97706;
+}
+
+.plan__room--critical .plan__reading {
+  fill: #dc2626;
+}
+
+.plan__room--unknown .plan__reading {
+  font-size: 10px;
+  font-weight: 400;
+  fill: var(--text);
+}
+
+.plan__target {
+  font-size: 9px;
+  fill: var(--text);
+  opacity: 0.75;
+}
+
+.plan__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.plan__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan__legend-item::before {
+  content: '';
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.plan__legend-item--normal::before {
+  background: #16a34a22;
+  border-color: #16a34a88;
+}
+
+.plan__legend-item--warning::before {
+  background: #d9770626;
+  border-color: #d97706aa;
+}
+
+.plan__legend-item--critical::before {
+  background: #dc262626;
+  border-color: #dc2626aa;
+}
+
+/* Карточка камеры */
+.chamber-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.chamber-detail__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.chamber-detail__name {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-h);
+}
+
+.chamber-detail__where {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.chamber-detail__now {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.chamber-detail__temp {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-h);
+}
+
+.chamber-detail__temp--warning {
+  color: #d97706;
+}
+
+.chamber-detail__temp--critical {
+  color: #dc2626;
+}
+
+.chamber-detail__alarm {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+}
+
+.chamber-detail__alarm--warning {
+  color: #d97706;
+}
+
+.chamber-detail__alarm--critical {
+  color: #dc2626;
+}
+
+.chamber-detail__close {
+  font: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chamber-detail__close:hover {
+  color: var(--text-h);
+  border-color: var(--accent-border);
+}
