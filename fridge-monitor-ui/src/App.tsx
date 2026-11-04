@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDevices } from './api/devices';
 import AverageChart from './components/chart/AverageChart';
+import ChamberTable from './components/dashboard/ChamberTable';
 import EventLog from './components/dashboard/EventLog';
 import ExportPanel from './components/dashboard/ExportPanel';
 import FridgeCard from './components/dashboard/FridgeCard';
@@ -55,6 +56,9 @@ export default function App() {
         setDevices(deviceList);
 
         await loadAllDeviceHistory(deviceList, 1);
+      } catch {
+        // Бэкенд мог ещё подниматься: пустую схему дозаполнит
+        // refreshDevices по первому же показанию из websocket.
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -162,7 +166,8 @@ export default function App() {
             <>
               <SummaryStats deviceIds={deviceIds} />
 
-              <section className="dashboard-section">
+              <section className="dashboard-section plan-layout">
+                <ChamberTable devices={devices} onSelect={setSelectedId} />
                 <FloorPlan
                   devices={devices}
                   selectedId={selectedId}

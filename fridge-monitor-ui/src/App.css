@@ -812,6 +812,112 @@
   border-color: #dc2626aa;
 }
 
+/* Схема и сводная таблица стоят рядом: таблица остаётся в левом верхнем
+   углу, как на чертеже заказчика. На узком экране — друг под другом. */
+.plan-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.plan-layout > .plan {
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .plan-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Помещения без датчиков: фон здания, а не объекты наблюдения. */
+.plan__room--hall rect {
+  fill: var(--code-bg);
+  stroke: var(--border);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.chamber-table__summary {
+  margin: 10px 0 12px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.chamber-table__summary-alert {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.chamber-table__groups {
+  display: block;
+}
+
+.chamber-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chamber-table__table th,
+.chamber-table__table td {
+  padding: 4px 3px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.chamber-table__table thead th {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  border-bottom-width: 2px;
+}
+
+.chamber-table__table tbody th {
+  text-align: left;
+  color: var(--text-h);
+}
+
+.chamber-table__fact {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.chamber-table__fact--warning {
+  color: #d97706;
+}
+
+.chamber-table__fact--critical {
+  color: #dc2626;
+}
+
+.chamber-table__fact--unknown {
+  font-weight: 400;
+  color: var(--text);
+}
+
+.chamber-table__min {
+  color: var(--text);
+}
+
+.chamber-table__row--empty {
+  opacity: 0.55;
+}
+
+.chamber-table__row--clickable {
+  cursor: pointer;
+}
+
+.chamber-table__row--clickable:hover th,
+.chamber-table__row--clickable:hover td {
+  background: var(--code-bg);
+}
+
 /* Карточка камеры */
 .chamber-detail {
   display: flex;
