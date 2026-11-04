@@ -18,6 +18,19 @@ from app.services.websocket_manager import manager
 device_temperatures = {}
 
 
+def _starting_temperature(device) -> float:
+    """Где начинает блуждать выдуманная температура.
+
+    Внутри заданных порогов, если они есть: иначе на демонстрации
+    морозильная камера показывала бы +4 °C, что выглядит поломкой.
+    """
+
+    if device.min_temp is not None and device.max_temp is not None:
+        return random.uniform(device.min_temp, device.max_temp)
+
+    return random.uniform(2.0, 6.0)
+
+
 async def initialize():
 
     async with AsyncSessionLocal() as db:
@@ -30,10 +43,7 @@ async def initialize():
 
         for device in devices:
 
-            device_temperatures[device.id] = random.uniform(
-                2.0,
-                6.0
-            )
+            device_temperatures[device.id] = _starting_temperature(device)
 
 
 async def run():
@@ -58,7 +68,7 @@ async def run():
             for device in devices:
 
                 current = device_temperatures.setdefault(
-                    device.id, random.uniform(2.0, 6.0)
+                    device.id, _starting_temperature(device)
                 )
 
                 current += random.uniform(
