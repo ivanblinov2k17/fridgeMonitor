@@ -18,7 +18,7 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.device import Device
 from app.models.measurement import Measurement
-from app.services import modbus
+from app.services import alarms, modbus, runtime_settings
 from app.services.websocket_manager import manager
 
 
@@ -48,6 +48,11 @@ class Poller:
         self.gateway_ok = True
         self._next_probe = 0
 
+        # How long the last cycle took, to tell whether the chosen
+        # interval is actually achievable on this line.
+        self.last_cycle_seconds = 0.0
+        self.slow_logged = False
+
     async def run(self):
 
         log.info(
@@ -62,6 +67,8 @@ class Poller:
 
         while True:
 
+            started = asyncio.get_running_loop().time()
+
             try:
                 await self.cycle()
 
@@ -70,7 +77,33 @@ class Poller:
                 # not stop polling until the container restarts.
                 log.exception("Poll cycle failed")
 
-            await asyncio.sleep(settings.POLL_INTERVAL_SECONDS)
+            self.last_cycle_seconds = (
+                asyncio.get_running_loop().time() - started
+            )
+
+            await asyncio.sleep(await self.interval())
+
+    async def interval(self) -> float:
+        """Interval for the next wait, read fresh so the dashboard's
+        setting takes effect without a restart.
+
+        A cycle that outruns the interval is worth knowing about: the line
+        cannot go faster than it does, whatever is chosen.
+        """
+
+        seconds = await runtime_settings.current_poll_interval()
+
+        if self.last_cycle_seconds > seconds and not self.slow_logged:
+            log.warning(
+                "A poll takes %.1f s, longer than the %s s interval",
+                self.last_cycle_seconds, seconds,
+            )
+            self.slow_logged = True
+
+        elif self.last_cycle_seconds <= seconds:
+            self.slow_logged = False
+
+        return seconds
 
     async def cycle(self):
 
@@ -162,6 +195,7 @@ class Poller:
 
         now = datetime.now(timezone.utc)
         events = []
+        readings = []
 
         async with AsyncSessionLocal() as db:
 
@@ -190,6 +224,8 @@ class Poller:
                         unit=unit,
                         channel=channel,
                         status=status,
+                        min_temp=settings.DEFAULT_MIN_TEMP,
+                        max_temp=settings.DEFAULT_MAX_TEMP,
                     )
                     db.add(device)
                     await db.flush()
@@ -216,11 +252,17 @@ class Poller:
                         )
                     )
 
+                readings.append((device, status, temperature))
+
+            alarm_by_device = await alarms.sync(db, readings, now)
+
+            for device, status, temperature in readings:
                 events.append(
                     {
                         "device_id": device.id,
                         "temperature": temperature,
                         "status": status,
+                        "alarm": alarm_by_device.get(device.id),
                         "timestamp": now.isoformat(),
                     }
                 )
@@ -235,7 +277,7 @@ class Poller:
         if not units:
             return
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc)
 
         async with AsyncSessionLocal() as db:
 
@@ -246,6 +288,12 @@ class Poller:
             for device in devices:
                 device.status = modbus.STATUS_NO_LINK
 
+            alarm_by_device = await alarms.sync(
+                db,
+                [(device, modbus.STATUS_NO_LINK, None) for device in devices],
+                now,
+            )
+
             await db.commit()
 
         for device in devices:
@@ -254,7 +302,8 @@ class Poller:
                     "device_id": device.id,
                     "temperature": None,
                     "status": modbus.STATUS_NO_LINK,
-                    "timestamp": now,
+                    "alarm": alarm_by_device.get(device.id),
+                    "timestamp": now.isoformat(),
                 }
             )
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Index, Integer, String
+from sqlalchemy import Float, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import Base
@@ -53,8 +53,27 @@ class Device(Base):
         nullable=False,
     )
 
+    # Alarm limits for this chamber, set per device because a freezer and a
+    # fridge share nothing. Empty means that end is not watched; a device
+    # that predates this column has both empty until someone sets them.
+    min_temp: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
+    max_temp: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
     measurements = relationship(
         "Measurement",
+        back_populates="device",
+        cascade="all, delete-orphan",
+    )
+
+    events = relationship(
+        "Event",
         back_populates="device",
         cascade="all, delete-orphan",
     )

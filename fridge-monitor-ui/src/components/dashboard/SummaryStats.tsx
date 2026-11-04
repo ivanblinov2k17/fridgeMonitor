@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import temperatureStore from '../../store';
 
-import { formatTemperature, getTempStatus } from '../../utils/temperature';
+import { formatTemperature } from '../../utils/temperature';
 
 interface Props {
   deviceIds: number[];
@@ -30,8 +30,13 @@ export default function SummaryStats({ deviceIds }: Props) {
   const min = temps.length > 0 ? Math.min(...temps) : undefined;
   const max = temps.length > 0 ? Math.max(...temps) : undefined;
 
-  const normalCount = temps.filter((t) => getTempStatus(t) === 'normal').length;
-  const alertCount = deviceIds.length - normalCount;
+  // Counted from the alarms the backend has open, so this agrees with the
+  // cards and with the event log instead of using a target of its own.
+  const alertCount = deviceIds.filter(
+    (id) => temperatureStore.getAlarm(id) !== null,
+  ).length;
+
+  const normalCount = deviceIds.length - alertCount;
 
   return (
     <section className="summary-stats">
@@ -65,7 +70,7 @@ export default function SummaryStats({ deviceIds }: Props) {
             <span className="stat-card__alert"> · {alertCount} alert</span>
           )}
         </span>
-        <span className="stat-card__hint">within 2–6°C target</span>
+        <span className="stat-card__hint">against each chamber's limits</span>
       </div>
     </section>
   );

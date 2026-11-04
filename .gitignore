@@ -3,3 +3,6 @@ __pycache__
 fridge.db
 *.pyc
 backend/data/
+fridge-images.tar
+.claude/launch.json
+.env

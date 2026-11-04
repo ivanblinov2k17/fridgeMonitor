@@ -6,7 +6,9 @@ from sqlalchemy import delete, select
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.device import Device
+from app.models.event import Event
 from app.models.measurement import Measurement
+from app.models.rollup import MeasurementRollup
 from app.services.seed import seed_devices
 
 
@@ -36,6 +38,10 @@ async def startup():
 
     asyncio.create_task(run())
 
+    from app.services.retention import run as run_retention
+
+    asyncio.create_task(run_retention())
+
 
 async def drop_mock_devices(db):
     """Removes the random demo devices once real sensors are polled.
@@ -50,6 +56,15 @@ async def drop_mock_devices(db):
     removed = (
         await db.execute(delete(Measurement).where(Measurement.device_id.in_(mock_ids)))
     ).rowcount
+
+    # A bulk delete goes round the ORM, so the cascade on the relationship
+    # does not fire and these would be left pointing at devices that are
+    # gone.
+    await db.execute(
+        delete(MeasurementRollup).where(MeasurementRollup.device_id.in_(mock_ids))
+    )
+
+    await db.execute(delete(Event).where(Event.device_id.in_(mock_ids)))
 
     devices = (await db.execute(delete(Device).where(Device.unit.is_(None)))).rowcount
 

@@ -11,10 +11,24 @@ from datetime import datetime, timezone
 from app.models.device import Device
 from app.models.measurement import Measurement
 
+from app.services import alarms, runtime_settings
 from app.services.websocket_manager import manager
 
 
 device_temperatures = {}
+
+
+def _starting_temperature(device) -> float:
+    """Где начинает блуждать выдуманная температура.
+
+    Внутри заданных порогов, если они есть: иначе на демонстрации
+    морозильная камера показывала бы +4 °C, что выглядит поломкой.
+    """
+
+    if device.min_temp is not None and device.max_temp is not None:
+        return random.uniform(device.min_temp, device.max_temp)
+
+    return random.uniform(2.0, 6.0)
 
 
 async def initialize():
@@ -29,10 +43,7 @@ async def initialize():
 
         for device in devices:
 
-            device_temperatures[device.id] = random.uniform(
-                2.0,
-                6.0
-            )
+            device_temperatures[device.id] = _starting_temperature(device)
 
 
 async def run():
@@ -49,12 +60,15 @@ async def run():
                 )
             ).scalars().all()
 
+            now = datetime.now(timezone.utc)
+            readings = []
+
             # Mock devices only: never invent numbers for real sensors left
             # from POLLER=modbus.
             for device in devices:
 
                 current = device_temperatures.setdefault(
-                    device.id, random.uniform(2.0, 6.0)
+                    device.id, _starting_temperature(device)
                 )
 
                 current += random.uniform(
@@ -69,25 +83,31 @@ async def run():
                 measurement = Measurement(
                     device_id=device.id,
                     temperature=current,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=now,
                 )
 
                 db.add(measurement)
 
-                
+                readings.append((device, "ok", current))
 
-
-                await manager.broadcast(
-                    {
-                        "device_id": device.id,
-                        "temperature": current,
-                        "status": "ok",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                )
+            alarm_by_device = await alarms.sync(db, readings, now)
 
             await db.commit()
 
+        for device, _, current in readings:
+
+            await manager.broadcast(
+                {
+                    "device_id": device.id,
+                    "temperature": current,
+                    "status": "ok",
+                    "alarm": alarm_by_device.get(device.id),
+                    "timestamp": now.isoformat(),
+                }
+            )
+
+        # Read fresh each cycle: changing it in the dashboard takes effect
+        # on the next reading rather than on the next restart.
         await asyncio.sleep(
-            settings.POLL_INTERVAL_SECONDS
+            await runtime_settings.current_poll_interval()
         )

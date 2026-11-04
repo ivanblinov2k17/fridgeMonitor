@@ -2,10 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDevices } from './api/devices';
 import AverageChart from './components/chart/AverageChart';
-import DeviceChart from './components/chart/DeviceChart';
+import ChamberTable from './components/dashboard/ChamberTable';
+import EventLog from './components/dashboard/EventLog';
 import ExportPanel from './components/dashboard/ExportPanel';
 import FridgeCard from './components/dashboard/FridgeCard';
 import Header from './components/dashboard/Header';
+import SettingsPanel from './components/dashboard/SettingsPanel';
+import ChamberDetail from './components/plan/ChamberDetail';
+import FloorPlan from './components/plan/FloorPlan';
 import SummaryStats from './components/dashboard/SummaryStats';
 import { loadAllDeviceHistory } from './services/historyLoader';
 import TemperatureService from './services/TemperatureService';
@@ -18,12 +22,14 @@ import './App.css';
 function applyStatuses(deviceList: Device[]) {
   for (const device of deviceList) {
     temperatureStore.setStatus(device.id, device.status ?? 'ok');
+    temperatureStore.setAlarm(device.id, device.alarm ?? null);
   }
 }
 
 export default function App() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [tab, setTab] = useState<'plan' | 'reports'>('plan');
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [, tick] = useState(0);
@@ -49,11 +55,10 @@ export default function App() {
         applyStatuses(deviceList);
         setDevices(deviceList);
 
-        if (deviceList.length > 0) {
-          setSelectedId(deviceList[0].id);
-        }
-
         await loadAllDeviceHistory(deviceList, 1);
+      } catch {
+        // Бэкенд мог ещё подниматься: пустую схему дозаполнит
+        // refreshDevices по первому же показанию из websocket.
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -91,7 +96,6 @@ export default function App() {
         devicesRef.current = deviceList;
         applyStatuses(deviceList);
         setDevices(deviceList);
-        setSelectedId((current) => current ?? deviceList[0]?.id ?? null);
 
         await loadAllDeviceHistory(added, 1);
       } catch {
@@ -119,41 +123,88 @@ export default function App() {
   const selectedDevice = devices.find((d) => d.id === selectedId);
   const deviceIds = useMemo(() => devices.map((d) => d.id), [devices]);
 
+  // Saving limits returns the device as it now stands, including whether
+  // the change opened or cleared an alarm.
+  function applyDeviceUpdate(updated: Device) {
+    setDevices((current) =>
+      current.map((device) => (device.id === updated.id ? updated : device)),
+    );
+
+    devicesRef.current = devicesRef.current.map((device) =>
+      device.id === updated.id ? updated : device,
+    );
+
+    temperatureStore.setAlarm(updated.id, updated.alarm ?? null);
+  }
+
   return (
     <div className="dashboard">
       <Header connected={connected} />
 
       {loading ? (
-        <div className="dashboard-loading">Loading fridge data…</div>
+        <div className="dashboard-loading">Загрузка…</div>
       ) : (
         <>
-          <SummaryStats deviceIds={deviceIds} />
+          <nav className="tabs">
+            <button
+              type="button"
+              className={`tabs__tab${tab === 'plan' ? ' tabs__tab--active' : ''}`}
+              onClick={() => setTab('plan')}
+            >
+              Схема
+            </button>
+            <button
+              type="button"
+              className={`tabs__tab${tab === 'reports' ? ' tabs__tab--active' : ''}`}
+              onClick={() => setTab('reports')}
+            >
+              Отчёты и настройки
+            </button>
+          </nav>
 
-          <section className="dashboard-section">
-            <h2 className="dashboard-section__title">All Fridges</h2>
-            <div className="fridge-grid">
-              {devices.map((device) => (
-                <FridgeCard
-                  key={device.id}
-                  device={device}
-                  selected={device.id === selectedId}
+          {tab === 'plan' ? (
+            <>
+              <SummaryStats deviceIds={deviceIds} />
+
+              <section className="dashboard-section plan-layout">
+                <ChamberTable devices={devices} onSelect={setSelectedId} />
+                <FloorPlan
+                  devices={devices}
+                  selectedId={selectedId}
                   onSelect={setSelectedId}
                 />
-              ))}
-            </div>
-          </section>
+              </section>
 
-          <section className="dashboard-section dashboard-charts">
-            {selectedDevice && (
-              <DeviceChart
-                deviceId={selectedDevice.id}
-                deviceName={selectedDevice.name}
-                location={selectedDevice.location}
-              />
-            )}
-            <AverageChart deviceIds={deviceIds} />
-            <ExportPanel devices={devices} />
-          </section>
+              {selectedDevice && (
+                <ChamberDetail
+                  device={selectedDevice}
+                  onSaved={applyDeviceUpdate}
+                  onClose={() => setSelectedId(null)}
+                />
+              )}
+            </>
+          ) : (
+            <section className="dashboard-section dashboard-charts">
+              <div className="fridge-grid">
+                {devices.map((device) => (
+                  <FridgeCard
+                    key={device.id}
+                    device={device}
+                    selected={device.id === selectedId}
+                    onSelect={(id) => {
+                      setSelectedId(id);
+                      setTab('plan');
+                    }}
+                  />
+                ))}
+              </div>
+
+              <AverageChart deviceIds={deviceIds} />
+              <EventLog />
+              <ExportPanel devices={devices} />
+              <SettingsPanel />
+            </section>
+          )}
         </>
       )}
     </div>
